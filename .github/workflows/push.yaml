@@ -1,0 +1,58 @@
+on: [push]
+name: push
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v1.2.0
+      - name: Setup Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.10"
+      - name: Install Requirements
+        run: |
+          pip install -r requirements.txt
+      - name: Build Wheel
+        run: |
+          python setup.py bdist_wheel
+      - name: Upload Wheel
+        uses: actions/upload-artifact@v2
+        with:
+          name: wheel
+          path: dist
+  test:
+    strategy:
+      matrix:
+        python: ["3.10", "3.9", "3.8", "3.7"]
+        os: [ubuntu-20.04, macos-10.15, windows-2019]
+    runs-on: ${{matrix.os}}
+    needs: [build]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v1.2.0
+      - name: Setup Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{matrix.python}}
+      - name: Download Wheel
+        uses: actions/download-artifact@v2
+        with:
+          name: wheel
+          path: dist
+      - name: Install Requirements
+        run: |
+          pip install -r requirements.txt
+          pip install --use-feature=in-tree-build --editable .
+      - name: Run Unit Tests
+        run: |
+          pytest
+      - name: CLI Smoke Tests
+        run: |
+          release --help
+          requirements --help
+      - name: Upload Coverage Html
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage-py${{ matrix.python }}-${{ matrix.os }}
+          path: cov_html

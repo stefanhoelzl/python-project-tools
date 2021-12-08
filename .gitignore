@@ -1,0 +1,15 @@
+# caches
+.mypy_cache
+.pytest_cache
+__pycache__
+
+# coverage
+.coverage
+.coverage.ws*
+cov_html
+
+# build
+venv
+python_project_tools.egg-info
+build
+dist
