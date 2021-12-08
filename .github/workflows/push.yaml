@@ -51,6 +51,9 @@ jobs:
         run: |
           release --help
           requirements --help
+      - name: Check Commit Messages
+        run: |
+          release check-commit-messages
       - name: Upload Coverage Html
         uses: actions/upload-artifact@v2
         with:
