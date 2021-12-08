@@ -39,6 +39,11 @@ def test_get() -> None:
     ]
 
 
+def test_get_ignore_from_git() -> None:
+    Path("requirements.txt").write_text("git+pkg", encoding="utf-8")
+    assert not list(requirements.get())
+
+
 def test_get_ignore_empty_lines() -> None:
     Path("requirements.txt").write_text("pkg==1.0.0\n   \n", encoding="utf-8")
     assert list(requirements.get()) == [

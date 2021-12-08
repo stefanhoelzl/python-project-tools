@@ -50,14 +50,16 @@ def get_updates() -> Generator[Update, None, None]:
             yield Update(requirement, latest_version)
 
 
-def get(requirements_txt: Optional[Path] = None) -> Generator[Requirement, None, None]:
+def get(
+    requirements_txt: Optional[Path] = None,
+) -> Generator[Requirement, None, None]:
     """Gets all defined requirements."""
     requirements_txt = requirements_txt or Path("requirements.txt")
     for requirement in _read_non_empty_lines(requirements_txt):
         if requirement.startswith("-r"):
             _, link = requirement.split(" ")
             yield from get(requirements_txt.parent / link)
-        else:
+        elif not requirement.startswith("git+"):
             name, version = requirement.split("==", 1)
             yield Requirement(name, version, requirements_txt)
 

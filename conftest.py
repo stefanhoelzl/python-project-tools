@@ -24,7 +24,7 @@ def pytest_configure(config: Config) -> None:
     )
 
     config.option.mccabe = True
-    config.addinivalue_line("mccabe-complexity", "3")
+    config.addinivalue_line("mccabe-complexity", "4")
 
     config.option.cov_source = ["tools"]
     config.option.cov_fail_under = 100
