@@ -181,9 +181,15 @@ def test_version_next_patch(
     assert release.version() == f"0.1.1+{commit_hashes[-1][:7]}"
 
 
-def test_release_candidate(git_repo: GitRepo, git_origin: GitRepo) -> None:
+@pytest.mark.parametrize("default_branch", ["master", "main"])
+def test_release_candidate(
+    default_branch: str, git_repo: GitRepo, git_origin: GitRepo
+) -> None:
+    git_origin.run(f"git branch -m master {default_branch}")
+    git_repo.run(f"git branch -m master {default_branch}")
+
     git_repo.run('git commit -m"initial" --allow-empty')
-    git_repo.run("git push -f origin master")
+    git_repo.run(f"git push -f origin {default_branch}")
     current_commit_hash = git_repo.run("git rev-parse HEAD", capture=True).strip()
 
     release.release_candidate()
@@ -210,3 +216,8 @@ def test_release_candidate_fail_on_local_changes(
     assert not git_origin.run(
         'git tag --list "release-candidate" --format="%(objectname)"', capture=True
     ).strip()
+
+
+def test_release_candidate_fail_on_missing_default_branch(git_repo: GitRepo) -> None:
+    with pytest.raises(RuntimeError):
+        release.release_candidate()

@@ -25,9 +25,19 @@ CommitMessageRegex = re.compile(
 
 
 def release_candidate() -> None:
-    """Sets the release-candidate tag and pushes it to master to trigger a new release."""
+    """
+    Sets the release-candidate tag and pushes it to the default branch
+    to trigger a new release.
+    """
     print(_git("fetch"))
-    print(_git("diff", "--exit-code", "origin/master"))
+
+    match = re.search(
+        "HEAD branch: (.*)", _git("remote", "show", "origin", check=False)
+    )
+    if match is None:
+        raise RuntimeError("could not determine default branch")
+
+    print(_git("diff", "--exit-code", f"origin/{match.group(1)}"))
     print(_git("tag", "--force", "release-candidate"))
     print(_git("push", "origin", "release-candidate"))
 
@@ -75,8 +85,12 @@ class _VersionTag(NamedTuple):
     commit_hash: Optional[str]
 
 
-def _git(*args: str) -> str:
-    return subprocess.check_output(["git", *args]).decode("utf-8").strip()
+def _git(*args: str, check: bool = True) -> str:
+    return (
+        subprocess.run(["git", *args], stdout=subprocess.PIPE, check=check)
+        .stdout.decode("utf-8")
+        .strip()
+    )
 
 
 def _versions() -> Dict[VersionInfo, str]:
