@@ -7,6 +7,7 @@ from typing import Callable, Dict, Generator, List, cast
 from uuid import uuid4 as uuid
 
 import pytest
+import toml
 from _pytest.fixtures import FixtureRequest
 from _pytest.monkeypatch import MonkeyPatch
 from pytest_git import GitRepo
@@ -15,6 +16,7 @@ from tools import release
 
 CommitFactory = Callable[[List[str]], List[str]]
 TagFactory = Callable[[Dict[str, str]], None]
+ConfigFactory = Callable[[Dict[str, str]], None]
 
 
 @pytest.fixture(autouse=True)
@@ -76,6 +78,17 @@ def tag_factory(git_repo: GitRepo) -> TagFactory:
     return _tag_factory
 
 
+@pytest.fixture
+def config(git_repo: GitRepo) -> ConfigFactory:
+    def _write_config(config: Dict[str, str]) -> None:
+        Path(git_repo.workspace, "pyproject.toml").write_text(
+            toml.dumps({"tool": {"python-project-tools": config}}),
+            encoding="utf-8",
+        )
+
+    return _write_config
+
+
 @pytest.mark.parametrize(
     "allowed_keyword", ["internal", "bugfix", "feature", "internal", "tooling", "docs"]
 )
@@ -95,6 +108,14 @@ def test_check_invalid_commit_message(
     assert next(error_messages) == f"Invalid commit message: {message}"
     with pytest.raises(SystemExit):
         next(error_messages)
+
+
+def test_check_valid_commit_message_ignore_commits_before_project_start(
+    commit_factory: CommitFactory, config: ConfigFactory
+) -> None:
+    start_commit, _ = commit_factory(["invalid", "[feature] valid"])
+    config({"start-commit": start_commit})
+    assert not list(release.check_commit_messages())
 
 
 def test_changelog(commit_factory: CommitFactory) -> None:

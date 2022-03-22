@@ -6,9 +6,11 @@ import re
 import subprocess
 import sys
 from collections import defaultdict
+from pathlib import Path
 from typing import Dict, Generator, Iterable, List, NamedTuple, Optional
 
 import fire
+import toml
 from semver import VersionInfo
 
 CategoryKeywords = {
@@ -22,6 +24,27 @@ ChangelogCategories = ["Features", "Bugfixes", "Internal"]
 CommitMessageRegex = re.compile(
     rf"\[(?P<category>{'|'.join(CategoryKeywords.values())})\] (?P<message>.*)"
 )
+
+
+class Config(NamedTuple):
+    """Global Configuration"""
+
+    @classmethod
+    def load(cls) -> "Config":
+        """Loads a configuration from pyproject.toml"""
+        config_file = Path("pyproject.toml")
+        if config_file.is_file():
+            config_dict = (
+                toml.loads(config_file.read_text(encoding="utf-8"))
+                .get("tool", {})
+                .get("python-project-tools", {})
+            )
+            return cls(
+                **{key.replace("-", "_"): value for key, value in config_dict.items()}
+            )
+        return cls()
+
+    start_commit: Optional[str] = None
 
 
 def release_candidate() -> None:
@@ -115,6 +138,7 @@ def _latest_version() -> _VersionTag:
 
 
 def _commits_since(commit_hash: Optional[str]) -> Iterable[str]:
+    commit_hash = commit_hash or Config.load().start_commit
     cmd = ["log", "--pretty=%s"]
     if commit_hash:
         cmd.append(f"HEAD...{commit_hash}")
