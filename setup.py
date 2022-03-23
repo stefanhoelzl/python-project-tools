@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name="python-project-tools",
-    version="dev",
+    version="0.1.0",
     author="Stefan Hoelzl",
     license="MIT",
     packages=["tools"],
