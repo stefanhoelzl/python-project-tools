@@ -29,7 +29,7 @@ def git_repo(
         git_repo.run("git config user.email pytest@example.com")
         yield git_repo
     finally:
-        os.chdir(request.config.invocation_dir)
+        os.chdir(request.config.invocation_dir)  # type: ignore
 
 
 @pytest.fixture
