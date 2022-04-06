@@ -59,7 +59,7 @@ def get(
         if requirement.startswith("-r"):
             _, link = requirement.split(" ")
             yield from get(requirements_txt.parent / link)
-        elif not requirement.startswith("git+"):
+        elif not _ignore_requirement(requirement):
             name, version = requirement.split("==", 1)
             yield Requirement(name, version, requirements_txt)
 
@@ -70,6 +70,14 @@ def _read_non_empty_lines(filepath: Path) -> Generator[str, None, None]:
             line = line.strip()
             if line:
                 yield line
+
+
+def _ignore_requirement(requirement: str) -> bool:
+    if requirement.startswith("git+"):
+        return True
+    if requirement.startswith("#"):
+        return True
+    return False
 
 
 def main() -> None:

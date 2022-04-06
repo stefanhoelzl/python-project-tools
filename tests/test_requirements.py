@@ -51,6 +51,13 @@ def test_get_ignore_empty_lines() -> None:
     ]
 
 
+def test_get_ignore_commets() -> None:
+    Path("requirements.txt").write_text("# comment\npkg==1.0.0\n", encoding="utf-8")
+    assert list(requirements.get()) == [
+        requirements.Requirement("pkg", "1.0.0", Path("requirements.txt")),
+    ]
+
+
 def test_get_from_multiple_files() -> None:
     Path("sub").mkdir()
     Path("requirements.txt").write_text("pkg==1.0.0\n-r sub/requirements.txt")
